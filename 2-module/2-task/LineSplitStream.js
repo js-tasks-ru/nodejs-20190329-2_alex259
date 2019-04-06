@@ -5,30 +5,23 @@ class LineSplitStream extends stream.Transform {
   constructor(options) {
     super(options);
 
-    this.buf = '';
+    this.remainder = '';
   }
   
-  pushLine(callback, flush) {
-    if (this.buf.indexOf(os.EOL) !== -1) {
-      let lines = this.buf.split(os.EOL);
-      let line = lines.splice(0, 1)[0];
-      this.buf = lines.join(os.EOL);
-
-      callback(null, line);
-    } else if (flush) {
-      callback(null, this.buf);
-    } else {
-      callback(null);
-    }
-  }
-
   _transform(chunk, encoding, callback) {
-    this.buf += chunk.toString();
-    this.pushLine(callback);    
+    let str = this.remainder + chunk.toString();    
+    let lines = str.split(os.EOL);
+    this.remainder = lines.pop();
+
+    for(let line of lines) {
+      this.push(line);
+    }
+
+    callback();
   }
   
   _flush(callback) {
-    this.pushLine(callback, true);
+    callback(null, this.remainder);
   }
 }
 
