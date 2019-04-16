@@ -2,7 +2,7 @@ const url = require('url');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
-const mime = require('mime');
+//const mime = require('mime');
 
 const server = new http.Server();
 
@@ -30,12 +30,15 @@ server.on('request', (req, res) => {
 
           } else {
 
-            res.setHeader("Content-type", mime.getType(filepath));
+            //res.setHeader("Content-type", mime.getType(filepath));
 
             fileStream = fs.createReadStream(filepath);
             fileStream.on("error", (err) => {
               res.statusCode = 500;
               res.end('Oops! something went wront');
+            });
+            res.on("close", (err) => {
+              fileStream.destroy();
             });
 
             res.statusCode = 200;
