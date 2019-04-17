@@ -39,10 +39,13 @@ server.on('request', (req, res) => {
         .on("error", (err) => {
           if (err.code === 'LIMIT_EXCEEDED') {
             fileStream.destroy();
-            fs.unlink(filepath, () => { 
+            fs.unlinkSync(filepath, () => { //sync?
               res.statusCode = 413;
               res.end('File is too big');
-              });            
+            });
+            res.statusCode = 413;
+            res.end('File is too big');
+
           } else {
             fileStream.destroy();
             fs.unlink(filepath, () => { 
