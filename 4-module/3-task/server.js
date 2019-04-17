@@ -1,6 +1,7 @@
 const url = require('url');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 
 const server = new http.Server();
 
@@ -11,6 +12,32 @@ server.on('request', (req, res) => {
 
   switch (req.method) {
     case 'DELETE':
+      if (!pathname) {
+        res.statusCode = 404;
+        res.end('Specify filename');
+
+      } else if (path.dirname(filepath) !== path.join(__dirname, 'files')) {
+        res.statusCode = 400;
+        res.end('Directories are not supported');
+
+      } else {
+
+        fs.unlink(filepath, (err) => {
+
+          if (err) {
+            if (err.code === "ENOENT") {
+              res.statusCode = 404;
+              res.end('No such file');
+            } else {
+              res.statusCode = 500;
+              res.end('Error');
+            }
+          }
+
+          res.statusCode = 200;
+          res.end();
+        });
+      }
 
       break;
 
