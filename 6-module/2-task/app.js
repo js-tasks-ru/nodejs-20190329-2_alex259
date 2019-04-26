@@ -35,40 +35,38 @@ app.use(async (ctx, next) => {
 const router = new Router();
 
 router.get('/users', async (ctx) => {
-  let users = await User.find({}).exec();
-  ctx.body = users;
+  ctx.body = await User.find({}).exec();
 });
 
 router.get('/users/:id', async (ctx) => {
   if (!mongoose.Types.ObjectId.isValid(ctx.params.id)) throw new InvalidIdError; 
 
   let user = await User.findById(ctx.params.id).exec();
-  if (!user) {
-    throw new NotFoundError; 
-  } else {
+  if (user) {
     ctx.body = user;
+  } else {
+    throw new NotFoundError; 
   }
 });
 
 router.patch('/users/:id', async (ctx) => {
   if (!mongoose.Types.ObjectId.isValid(ctx.params.id)) throw new InvalidIdError; 
   
-  let newUser = {};
-  if (ctx.request.body.email) newUser.email = ctx.request.body.email;
-  if (ctx.request.body.displayName) newUser.displayName = ctx.request.body.displayName;
+  let user = await User.findOne({_id: ctx.params.id}).exec();
 
-  let res = await User.update({_id: ctx.params.id}, newUser, {runValidators: true}).exec();
-
-  if (res.n === 0) {
-    throw new NotFoundError;
-  } else {
+  if (user) {
+    if (ctx.request.body.email) user.email = ctx.request.body.email;
+    if (ctx.request.body.displayName) user.displayName = ctx.request.body.displayName;
+    await user.validate();
+    await user.save();
     ctx.body = await User.findById(ctx.params.id).exec();
+  } else {
+    throw new NotFoundError;
   }
 });
 
 router.post('/users', async (ctx) => {
-  let users = await User.create({email: ctx.request.body.email, displayName: ctx.request.body.displayName});
-  ctx.body = users;
+  ctx.body = await User.create({email: ctx.request.body.email, displayName: ctx.request.body.displayName});
 });
 
 router.delete('/users/:id', async (ctx) => {
